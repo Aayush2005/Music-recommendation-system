@@ -1,5 +1,16 @@
-PLAYLISTS = [
-    # Add YouTube playlist links here
-    "https://www.youtube.com/playlist?list=PL5X_-JbCGoGNFz8xNDKfkuePx02Q1X4cR",
-    "https://www.youtube.com/playlist?list=PL5X_-JbCGoGNs1MrilPbWrQ2wdSatVsUz"
+import os
+
+dataset_dir = "datasets"
+output_file = "songs_list.txt"  # saved at root
+
+files = [
+    os.path.splitext(f)[0]  # remove .mp3 extension
+    for f in os.listdir(dataset_dir)
+    if os.path.isfile(os.path.join(dataset_dir, f)) and f.endswith(".mp3")
 ]
+
+with open(output_file, "w", encoding="utf-8") as f:
+    for song in files:
+        f.write(song + "\n")
+
+print(f"Saved {len(files)} song names to {output_file}")
