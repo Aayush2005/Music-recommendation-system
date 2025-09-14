@@ -3,3 +3,8 @@ yt-dlp
 mutagen
 jiosaavn-python
 requests
+librosa>=0.10.1
+tensorflow>=2.15.0
+tensorflow-hub
+numpy<2.0.0
+pydub
