@@ -54,6 +54,14 @@ Audio Files → Feature Extraction → Dimensionality Reduction → Clustering �
 
 ### Testing the Recommendation System
 
+1. **Cone the repositry:**
+   ```bash
+    git clone https://github.com/Aayush2005/Music-recommendation-system.git
+    cd Music-recommendation-system
+
+   ```
+   
+
 1. **Create and Activate Environment:**
    ```bash
    conda create -p venv python=3.12
