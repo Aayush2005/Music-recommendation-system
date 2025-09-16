@@ -16,6 +16,11 @@ from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 import yt_dlp
 import logging
+import warnings
+
+# Suppress TensorFlow warnings for production
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+warnings.filterwarnings('ignore')
 
 # Import prediction functions
 from prediction import run as process_audio_file
@@ -152,4 +157,5 @@ if __name__ == '__main__':
     print("📂 Required files found ✓")
     print("🌐 Server will be available at: http://localhost:5000")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
