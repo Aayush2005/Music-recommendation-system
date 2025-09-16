@@ -29,7 +29,10 @@ app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Temporary directory for downloads
@@ -82,56 +85,75 @@ def index():
 def get_recommendations():
     """API endpoint to get recommendations from YouTube URL"""
     try:
+        logger.info("Received recommendation request")
         data = request.get_json()
+        
+        if not data:
+            logger.error("No JSON data received")
+            return jsonify({'error': 'No data provided'}), 400
+            
         youtube_url = data.get('url', '').strip()
         
         if not youtube_url:
+            logger.error("No YouTube URL provided")
             return jsonify({'error': 'YouTube URL is required'}), 400
         
         # Validate YouTube URL
         if 'youtube.com' not in youtube_url and 'youtu.be' not in youtube_url:
+            logger.error(f"Invalid YouTube URL: {youtube_url}")
             return jsonify({'error': 'Please provide a valid YouTube URL'}), 400
         
         logger.info(f"Processing YouTube URL: {youtube_url}")
         
-        # Create temporary directory for this request
-        with tempfile.TemporaryDirectory(dir=TEMP_DIR) as temp_dir:
-            temp_path = Path(temp_dir)
-            
-            # Download audio from YouTube
-            logger.info("Downloading audio from YouTube...")
-            audio_file, song_title = download_youtube_audio(youtube_url, temp_path)
-            
-            if not audio_file:
-                return jsonify({'error': 'Failed to download audio from YouTube'}), 500
-            
-            logger.info(f"Downloaded: {song_title}")
-            
-            # Process the audio file through prediction pipeline
-            logger.info("Running prediction pipeline...")
-            predictions = process_audio_file(str(audio_file))
-            
-            if not predictions:
-                return jsonify({'error': 'Failed to generate recommendations'}), 500
-            
-            # Add the original song info
-            result = {
-                'original_song': {
-                    'title': song_title,
-                    'url': youtube_url
-                },
-                'recommendations': predictions.get('recommendations', []),
-                'cluster_id': predictions.get('cluster_id', -1),
-                'method': predictions.get('method', 'unknown'),
-                'total_candidates': predictions.get('total_candidates', 0)
-            }
-            
-            logger.info(f"Generated {len(result['recommendations'])} recommendations")
-            return jsonify(result)
+        try:
+            # Create temporary directory for this request
+            with tempfile.TemporaryDirectory(dir=TEMP_DIR) as temp_dir:
+                temp_path = Path(temp_dir)
+                
+                # Download audio from YouTube
+                logger.info("Starting YouTube download...")
+                audio_file, song_title = download_youtube_audio(youtube_url, temp_path)
+                
+                if not audio_file:
+                    logger.error("Failed to download audio from YouTube")
+                    return jsonify({'error': 'Failed to download audio from YouTube. The video might be private or unavailable.'}), 500
+                
+                logger.info(f"Successfully downloaded: {song_title}")
+                
+                # Process the audio file through prediction pipeline
+                logger.info("Starting prediction pipeline...")
+                predictions = process_audio_file(str(audio_file))
+                
+                if not predictions:
+                    logger.error("Prediction pipeline returned no results")
+                    return jsonify({'error': 'Failed to generate recommendations. Audio processing failed.'}), 500
+                
+                if 'error' in predictions:
+                    logger.error(f"Prediction pipeline error: {predictions['error']}")
+                    return jsonify({'error': f'Audio analysis failed: {predictions["error"]}'}), 500
+                
+                # Add the original song info
+                result = {
+                    'original_song': {
+                        'title': song_title,
+                        'url': youtube_url
+                    },
+                    'recommendations': predictions.get('recommendations', []),
+                    'cluster_id': predictions.get('cluster_id', -1),
+                    'method': predictions.get('method', 'unknown'),
+                    'total_candidates': predictions.get('total_candidates', 0)
+                }
+                
+                logger.info(f"Successfully generated {len(result['recommendations'])} recommendations")
+                return jsonify(result)
+                
+        except Exception as inner_e:
+            logger.error(f"Error in processing pipeline: {str(inner_e)}", exc_info=True)
+            return jsonify({'error': f'Processing failed: {str(inner_e)}'}), 500
             
     except Exception as e:
-        logger.error(f"Error in recommendation endpoint: {e}")
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+        logger.error(f"Error in recommendation endpoint: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
