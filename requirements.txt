@@ -11,3 +11,4 @@ tensorflow-hub==0.16.1
 types-requests==2.32.4.20250809
 yt-dlp==2025.9.5
 faiss-cpu==1.12.0
+hdbscan==0.8.40

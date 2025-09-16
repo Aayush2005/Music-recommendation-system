@@ -54,15 +54,28 @@ Audio Files → Feature Extraction → Dimensionality Reduction → Clustering �
 
 ### Testing the Recommendation System
 
-1. **Activate Environment:**
+1. **Create and Activate Environment:**
    ```bash
-   conda activate /path/to/your/venv
+   conda create -p venv python=3.12
+   conda activate venv/
+
+   ```
+   or 
+   ```bash
+   pyenv install --list
+   pyenv install 3.12
+   pyenv virtualenv 3.12 venv
+   pyenv local venv
+
+   ```
+   
+2. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
    ```
 
-2. **Place Test Files:**
-   - Add `.mp3` files to the `test/` directory
-
-3. **Run Predictions:**
+3. **Prediction**
+  - Add your mp3 song in test/
    ```bash
    python prediction.py
    ```
