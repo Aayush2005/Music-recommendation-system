@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Music Recommendation System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(119, 198, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            color: #cbd5e1;
+            font-weight: 300;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .input-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 24px;
+            pointer-events: none;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 18px 24px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 16px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-field::placeholder {
+            color: #64748b;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.6);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 0 20px rgba(102, 126, 234, 0.2);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .btn {
+            padding: 18px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .input-info {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px;
+            color: white;
+        }
+
+        .loading i {
+            font-size: 4rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .loading h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .loading p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .original-song {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .original-song::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .original-song h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .original-song .song-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #f1f5f9;
+        }
+
+        .original-song a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .original-song a:hover {
+            color: #764ba2;
+            transform: translateX(5px);
+        }
+
+        .recommendations-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .recommendations-header h2 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-top: 15px;
+            color: #e2e8f0;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .song-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .song-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .song-card:hover::before {
+            opacity: 1;
+        }
+
+        .song-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .song-image {
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .song-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .song-card:hover .song-image img {
+            transform: scale(1.1);
+        }
+
+        .song-image .placeholder {
+            font-size: 4.5rem;
+            color: white;
+            opacity: 0.7;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .song-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-button {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #667eea;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .song-card:hover .play-button {
+            transform: scale(1);
+        }
+
+        .song-info {
+            padding: 25px;
+        }
+
+        .song-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f1f5f9;
+            line-height: 1.3;
+        }
+
+        .song-details {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .song-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .language-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .duration {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .stats {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #e2e8f0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Input validation styles */
+        .input-field.valid {
+            border-color: rgba(34, 197, 94, 0.6);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .input-field.invalid {
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .input-section {
+                padding: 25px;
+            }
+
+            .recommendations-header h2 {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Enhanced animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .song-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .song-card:nth-child(even) {
+            animation-delay: 0.1s;
+        }
+
+        .song-card:nth-child(3n) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-music"></i> Music Recommendation System</h1>
+            <p>Discover similar songs using advanced AI-powered music analysis</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="url" 
+                    id="youtubeUrl" 
+                    class="input-field" 
+                    placeholder="Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)"
+                    required
+                >
+                <button id="analyzeBtn" class="btn">
+                    <i class="fas fa-search"></i>
+                    Get Recommendations
+                </button>
+            </div>
+            <p class="input-info">
+                <i class="fas fa-info-circle"></i>
+                Paste any YouTube music video URL to get AI-powered song recommendations based on audio features
+            </p>
+        </div>
+
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <h3>Analyzing your song...</h3>
+            <p>This may take 10-15 seconds while we extract audio features</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="results" class="results-section">
+            <div id="originalSong" class="original-song"></div>
+            
+            <div class="recommendations-header">
+                <h2><i class="fas fa-heart"></i> Recommended For You</h2>
+                <div id="stats" class="stats"></div>
+                <div id="methodBadge" class="method-badge"></div>
+            </div>
+            
+            <div id="recommendationsGrid" class="recommendations-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const youtubeUrl = document.getElementById('youtubeUrl');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const originalSong = document.getElementById('originalSong');
+        const recommendationsGrid = document.getElementById('recommendationsGrid');
+        const stats = document.getElementById('stats');
+        const methodBadge = document.getElementById('methodBadge');
+
+        analyzeBtn.addEventListener('click', analyzeMusic);
+        youtubeUrl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') analyzeMusic();
+        });
+
+        async function analyzeMusic() {
+            const url = youtubeUrl.value.trim();
+            
+            if (!url) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+
+            if (!isValidYouTubeUrl(url)) {
+                showError('Please enter a valid YouTube URL');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            results.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to get recommendations');
+                }
+
+                displayResults(data);
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function isValidYouTubeUrl(url) {
+            return url.includes('youtube.com') || url.includes('youtu.be');
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            setTimeout(() => {
+                error.style.display = 'none';
+            }, 5000);
+        }
+
+        function displayResults(data) {
+            // Display original song
+            originalSong.innerHTML = `
+                <h3><i class="fas fa-play-circle"></i> Original Song</h3>
+                <div class="song-title">${data.original_song.title}</div>
+                <a href="${data.original_song.url}" target="_blank">
+                    <i class="fab fa-youtube"></i> View on YouTube
+                </a>
+            `;
+
+            // Display stats
+            stats.innerHTML = `
+                <strong>${data.recommendations.length}</strong> recommendations found • 
+                Cluster ID: <strong>${data.cluster_id}</strong> • 
+                <strong>${data.total_candidates}</strong> total candidates
+            `;
+
+            // Display method badge
+            methodBadge.textContent = data.method === 'similarity' ? 
+                '🔍 Similarity-Based Analysis' : '🎯 Cluster-Based Analysis';
+
+            // Display recommendations
+            recommendationsGrid.innerHTML = '';
+            data.recommendations.forEach((song, index) => {
+                const card = createSongCard(song);
+                card.style.animationDelay = `${index * 0.1}s`;
+                recommendationsGrid.appendChild(card);
+            });
+
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function createSongCard(song) {
+            const card = document.createElement('div');
+            card.className = 'song-card';
+            
+            const duration = formatDuration(song.duration);
+            const imageUrl = song.image_url || '';
+            
+            card.innerHTML = `
+                <div class="song-image">
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" alt="${song.title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                         <div class="placeholder" style="display: none;"><i class="fas fa-music"></i></div>` :
+                        `<div class="placeholder"><i class="fas fa-music"></i></div>`
+                    }
+                    <div class="play-overlay">
+                        <div class="play-button">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="song-info">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-details">
+                        <i class="fas fa-album"></i> ${song.album || 'Unknown Album'}
+                    </div>
+                    <div class="song-details">
+                        <i class="fas fa-calendar"></i> ${song.year || 'Unknown Year'}
+                    </div>
+                    <div class="song-meta">
+                        <span class="language-badge">${song.language || 'unknown'}</span>
+                        <span class="duration">${duration}</span>
+                    </div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                if (song.perma_url) {
+                    window.open(song.perma_url, '_blank');
+                }
+            });
+
+            return card;
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Enhanced visual feedback
+        youtubeUrl.addEventListener('input', () => {
+            const url = youtubeUrl.value.trim();
+            youtubeUrl.classList.remove('valid', 'invalid');
+            
+            if (url && isValidYouTubeUrl(url)) {
+                youtubeUrl.classList.add('valid');
+            } else if (url) {
+                youtubeUrl.classList.add('invalid');
+            }
+        });
+    </script>
+</body>
+</html>

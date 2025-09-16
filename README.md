@@ -52,7 +52,24 @@ Audio Files → Feature Extraction → Dimensionality Reduction → Clustering �
 
 ## Usage
 
-### Testing the Recommendation System
+### 🌐 Web Application (Recommended)
+
+1. **Start the Server:**
+   ```bash
+   conda activate venv/
+   python main.py
+   ```
+
+2. **Open Browser:**
+   - Navigate to `http://localhost:5000`
+
+3. **Get Recommendations:**
+   - Paste any YouTube music video URL
+   - Click "Get Recommendations"
+   - View beautiful recommendation cards
+   - Click cards to open songs on JioSaavn
+
+### 🎵 Command Line Testing
 
 1. **Cone the repositry:**
    ```bash
@@ -62,7 +79,7 @@ Audio Files → Feature Extraction → Dimensionality Reduction → Clustering �
    ```
    
 
-1. **Create and Activate Environment:**
+2. **Create and Activate Environment:**
    ```bash
    conda create -p venv python=3.12
    conda activate venv/
@@ -77,18 +94,18 @@ Audio Files → Feature Extraction → Dimensionality Reduction → Clustering �
 
    ```
    
-2. **Install Dependencies**
+3. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Prediction**
+4. **Prediction**
   - Add your mp3 song in test/
    ```bash
    python prediction.py
    ```
 
-4. **View Results:**
+5. **View Results:**
    - Check `predictions_cluster_top10.json` for recommendations
 
 ### Example Output

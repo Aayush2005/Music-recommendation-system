@@ -131,63 +131,62 @@ def assign_cluster(feature_vec):
     return assigned
 
 # ---------------------------
-# Core runner for one file
+# Prediction
 # ---------------------------
-def run(file_path: str):
-    """Process a single MP3 file and return recommendations."""
+predictions = {}
+print(f"[i] Processing {len(list(Path(TEST_DIR).glob('*.mp3')))} test files...")
+
+for fp in Path(TEST_DIR).glob("*.mp3"):
     try:
+        print(f"[i] Processing: {fp.name}")
+        
         # Load audio
-        y, sr = load_mp3(file_path)
+        y, sr = load_mp3(fp)
         
-        # Extract Librosa features
+        # Extract Librosa features (matching training pipeline)
         lib_feat, dur = extract_librosa(y, sr)
+        print(f"    Librosa features: {len(lib_feat)} dims, duration: {dur:.2f}s")
         
-        # Extract YAMNet features and instruments
+        # Extract YAMNet features and instruments (matching training pipeline)
         yam_feat, instrument_score = extract_yamnet_with_instruments(y, sr)
+        print(f"    YAMNet embedding: {len(yam_feat)} dims, top instrument score: {instrument_score:.3f}")
         
-        # Apply PCA
+        # Apply PCA to YAMNet features (matching training pipeline)
         yam_feat_reduced = pca.transform(yam_feat.reshape(1, -1))[0]
+        print(f"    YAMNet reduced: {len(yam_feat_reduced)} dims")
         
-        # Combine features
+        # Combine features in the same order as training
         final_vec = combine_features(lib_feat, yam_feat_reduced, instrument_score, dur)
+        print(f"    Final feature vector: {len(final_vec)} dims")
         
         # Assign to cluster
         cluster_id = assign_cluster(final_vec)
+        print(f"    Assigned to cluster: {cluster_id}")
         
-        # Get candidate songs
+        # Get songs from the same cluster
         candidate_song_ids = cluster_to_song_ids.get(cluster_id, [])
         
-        # Fallback to similarity if cluster empty
+        # If no songs in cluster (e.g., cluster -1 for noise), use similarity-based fallback
         if not candidate_song_ids:
+            print(f"    No songs in cluster {cluster_id}, using similarity-based recommendations...")
+            
+            # Calculate similarity to all songs in the dataset
             similarities = []
             for sid, song_data in features_reduced.items():
                 if "features" in song_data:
                     song_features = np.array(song_data["features"], dtype=np.float32)
                     similarity = 1.0 / (1.0 + np.linalg.norm(final_vec - song_features))
                     similarities.append((sid, similarity))
+            
+            # Sort by similarity and get top 10
             similarities.sort(key=lambda x: x[1], reverse=True)
             candidate_song_ids = [sid for sid, _ in similarities[:10]]
         
-        # Build recommendations with duplicate filtering
+        # Create recommendations with metadata
         top_songs = []
-        seen_urls = set()
-        
-        for sid in candidate_song_ids:
-            if len(top_songs) >= 10:  # Stop when we have 10 unique songs
-                break
-                
+        for sid in candidate_song_ids[:10]:
             if sid in song_id_to_meta:
                 song_meta = song_id_to_meta[sid]
-                perma_url = song_meta.get("perma_url")
-                
-                # Skip if we've already seen this URL
-                if perma_url and perma_url in seen_urls:
-                    continue
-                    
-                # Add to seen URLs if it exists
-                if perma_url:
-                    seen_urls.add(perma_url)
-                
                 top_songs.append({
                     "song_id": sid,
                     "title": song_meta["title"],
@@ -195,30 +194,30 @@ def run(file_path: str):
                     "year": song_meta.get("year", ""),
                     "language": song_meta.get("language", ""),
                     "duration": song_meta.get("duration", 0),
-                    "perma_url": perma_url,
+                    "perma_url": song_meta["perma_url"],
                     "image_url": song_meta.get("image_url", "")
                 })
         
-        return {
+        predictions[fp.name] = {
             "cluster_id": cluster_id,
             "total_candidates": len(candidate_song_ids),
             "recommendations": top_songs,
             "method": "cluster" if cluster_to_song_ids.get(cluster_id) else "similarity"
         }
+        
+        method = "cluster-based" if cluster_to_song_ids.get(cluster_id) else "similarity-based"
+        print(f"    → Found {len(top_songs)} recommendations using {method} approach")
+        print()
 
     except Exception as e:
-        return {"error": str(e)}
+        print(f"[!] Error processing {fp.name}: {e}")
+        import traceback
+        traceback.print_exc()
+        print()
 
-# ---------------------------
-# Batch mode (test directory)
-# ---------------------------
-if __name__ == "__main__":
-    predictions = {}
-    print(f"[i] Processing {len(list(Path(TEST_DIR).glob('*.mp3')))} test files...")
-    for fp in Path(TEST_DIR).glob("*.mp3"):
-        print(f"[i] Processing: {fp.name}")
-        predictions[fp.name] = run(str(fp))
-    with open(OUTPUT_JSON, "w") as f:
-        json.dump(predictions, f, indent=2)
-    print(f"[✓] Predictions saved to '{OUTPUT_JSON}'")
-    print(f"[✓] Processed {len(predictions)} files successfully")
+# Save predictions to JSON
+with open(OUTPUT_JSON, "w") as f:
+    json.dump(predictions, f, indent=2)
+
+print(f"[✓] Predictions saved to '{OUTPUT_JSON}'")
+print(f"[✓] Processed {len(predictions)} files successfully")
