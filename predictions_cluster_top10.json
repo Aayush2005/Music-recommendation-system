@@ -1,0 +1,109 @@
+{
+  "Khamoshiyan Full Video, Arijit Singh - Ali Fazal, Sapna Pabbi, Gurmeet C [Mv3SZDP7QUo].mp3": {
+    "cluster_id": 0,
+    "total_candidates": 10,
+    "recommendations": [
+      {
+        "song_id": "8c98acfc_0b75e688-2a3c-4a55-86c2-21d82fabfc3a",
+        "title": "Ik Mulaqaat Unplugged Ft Ayushmann Khurrana",
+        "album": "Dream Girl",
+        "year": "2019",
+        "language": "hindi",
+        "duration": 216,
+        "perma_url": "https://www.jiosaavn.com/song/ik-mulaqaat-unplugged/QQdZVCIJBlU",
+        "image_url": "https://c.saavncdn.com/319/Dream-Girl-Hindi-2019-20190914125707-150x150.jpg"
+      },
+      {
+        "song_id": "bc65fda8_ea0a0506-2409-490e-b879-2d6f2fb00896",
+        "title": "Hone Laga",
+        "album": "Desi Boyz",
+        "year": "2011",
+        "language": "hindi",
+        "duration": 187,
+        "perma_url": "https://www.jiosaavn.com/song/subha-hone-na-de/OiAmXCUBZ0M",
+        "image_url": "https://c.saavncdn.com/743/Desi-Boyz-Hindi-2011-20241223142123-150x150.jpg"
+      },
+      {
+        "song_id": "b7765bf1_4ad217a9-3f36-4262-ae86-27df17b6bcad",
+        "title": "Dil Maang Raha Hai",
+        "album": "Ghost",
+        "year": "2019",
+        "language": "hindi",
+        "duration": 197,
+        "perma_url": "https://www.jiosaavn.com/song/dil-maang-raha-hai/Kj4yQhh-X3g",
+        "image_url": "https://c.saavncdn.com/645/Ghost-Hindi-2019-20250617070914-150x150.jpg"
+      },
+      {
+        "song_id": "1edd1202_4815e364-647b-4eee-842b-d274e6d33c3a",
+        "title": "Dil Maang Raha Hai",
+        "album": "Ghost",
+        "year": "2019",
+        "language": "hindi",
+        "duration": 171,
+        "perma_url": "https://www.jiosaavn.com/song/dil-maang-raha-hai/Kj4yQhh-X3g",
+        "image_url": "https://c.saavncdn.com/645/Ghost-Hindi-2019-20250617070914-150x150.jpg"
+      },
+      {
+        "song_id": "6505e3a0_d8fbeb6f-30a4-4a87-b450-701fe2e502c7",
+        "title": "Mera Safar",
+        "album": "Jalebi (Original Motion Picture Soundtrack)",
+        "year": "2018",
+        "language": "hindi",
+        "duration": 190,
+        "perma_url": "https://www.jiosaavn.com/song/mera-pyar-tera-pyar/IzsYUxdKcAE",
+        "image_url": "https://c.saavncdn.com/619/Jalebi-Hindi-2018-20180921123431-150x150.jpg"
+      },
+      {
+        "song_id": "4f8f17e2_eeddbeb8-cfc3-40da-a737-690449136421",
+        "title": "Rang Dariya",
+        "album": "Sky Force",
+        "year": "2025",
+        "language": "hindi",
+        "duration": 195,
+        "perma_url": "https://www.jiosaavn.com/song/rang/QgAFYjFaenw",
+        "image_url": "https://c.saavncdn.com/695/Sky-Force-Hindi-2025-20250129103147-150x150.jpg"
+      },
+      {
+        "song_id": "ee90cfa7_a6d605db-773a-4b43-bb89-8d2940880f98",
+        "title": "Rabba Janda",
+        "album": "Heropanti",
+        "year": "2014",
+        "language": "hindi",
+        "duration": 183,
+        "perma_url": "https://www.jiosaavn.com/song/rabba/HRwnZRVKZ30",
+        "image_url": "https://c.saavncdn.com/930/Heropanti-2014-150x150.jpg"
+      },
+      {
+        "song_id": "e3b5b60e_fadd96de-e8b5-430c-803f-022e96c745db",
+        "title": "Ishq Namazaa The Big Bull Abhishek Bachchan Nikita Dutta Ankit Tiwari Gourov D Kunwar J",
+        "album": "The Big Bull",
+        "year": "2021",
+        "language": "hindi",
+        "duration": 190,
+        "perma_url": "https://www.jiosaavn.com/song/ishq-namazaa/QR0tfRZZRF0",
+        "image_url": "https://c.saavncdn.com/204/The-Big-Bull-Hindi-2021-20210326062936-150x150.jpg"
+      },
+      {
+        "song_id": "95bcb872_ca8c230c-790b-4025-8a45-073765edd570",
+        "title": "Oh Isha",
+        "album": "Ishq",
+        "year": "2012",
+        "language": "telugu",
+        "duration": 162,
+        "perma_url": "https://www.jiosaavn.com/song/oh-priya-priya/Rx1ZaD8AD0s",
+        "image_url": "https://c.saavncdn.com/057/Ishq-Telugu-2012-150x150.jpg"
+      },
+      {
+        "song_id": "fcc94cde_ae4487ef-f228-4651-9e55-0adfa7c5ffcb",
+        "title": "Suno",
+        "album": null,
+        "year": null,
+        "language": null,
+        "duration": 201,
+        "perma_url": null,
+        "image_url": null
+      }
+    ],
+    "method": "similarity"
+  }
+}
