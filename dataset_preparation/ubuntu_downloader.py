@@ -9,7 +9,7 @@ PLAYLISTS = [
     "https://youtube.com/playlist?list=PL0Z67tlyTaWphlJ8dod2fSFGmBlUW_KJJ&si=Oe9YXSJda1EWqIWH"
 ]
 
-OUTPUT_DIR = "datasetsTEST"
+OUTPUT_DIR = "datasets"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 DOWNLOADED_FILE = "downloaded_songs.txt"
 
@@ -17,7 +17,7 @@ DOWNLOADED_FILE = "downloaded_songs.txt"
 if os.path.exists(DOWNLOADED_FILE):
     with open(DOWNLOADED_FILE, "r", encoding="utf-8") as f:
         downloaded_songs = set(line.strip("\n") for line in f if line.strip())
-else:
+else:   
     downloaded_songs = set()
 
 def sanitize_title(title: str) -> str:
