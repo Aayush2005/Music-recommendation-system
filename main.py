@@ -39,6 +39,12 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path("temp_downloads")
 TEMP_DIR.mkdir(exist_ok=True)
 
+# --- MODIFICATION START ---
+# Define the path for the cookie file, which Render provides at this location
+COOKIE_FILE_PATH = '/etc/secrets/cookies.txt'
+# --- MODIFICATION END ---
+
+
 def download_youtube_audio(url, output_path):
     """Download audio from YouTube URL using yt-dlp"""
     try:
@@ -53,6 +59,15 @@ def download_youtube_audio(url, output_path):
             'quiet': True,
             'no_warnings': True,
         }
+        
+        # --- MODIFICATION START ---
+        # Check if the cookie file exists and add it to the options
+        if os.path.exists(COOKIE_FILE_PATH):
+            logger.info(f"Cookie file found at {COOKIE_FILE_PATH}. Using cookies for download.")
+            ydl_opts['cookiefile'] = COOKIE_FILE_PATH
+        else:
+            logger.info("Cookie file not found. Proceeding without cookies.")
+        # --- MODIFICATION END ---
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -166,7 +181,7 @@ if __name__ == '__main__':
         'clusters.json',
         'features_reduced.json', 
         'metadata.json',
-        'yamnet_pca.joblib'
+        'models/yamnet_pca.joblib'
     ]
     
     missing_files = [f for f in required_files if not Path(f).exists()]
