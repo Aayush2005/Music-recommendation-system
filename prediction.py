@@ -3,10 +3,9 @@ import numpy as np
 from pathlib import Path
 from pydub import AudioSegment
 import librosa
-import tensorflow as tf
-import tensorflow_hub as hub
 import joblib
 import requests
+import onnxruntime as ort
 
 # ---------------------------
 # Paths
@@ -15,8 +14,9 @@ TEST_DIR = "test"
 CLUSTERS_JSON = "clusters.json"
 FEATURES_REDUCED_JSON = "features_reduced.json"
 METADATA_JSON = "metadata.json"
-PCA_FILE = "yamnet_pca.joblib"
+PCA_FILE = "models/yamnet_pca.joblib"
 OUTPUT_JSON = "predictions_cluster_top10.json"
+ONNX_MODEL_PATH = "models/yamnet.onnx"
 
 # ---------------------------
 # Load metadata
@@ -35,18 +35,25 @@ cluster_centroids = {int(k): np.array(v, dtype=np.float32)
                      for k, v in clusters_data["centroids"].items()}
 
 with open(FEATURES_REDUCED_JSON, "r") as f:
-    features_reduced = json.load(f)  # each song_id → {"features": [...], "cluster": int}
+    features_reduced = json.load(f)
 
-# Build cluster → song_id mapping
 cluster_to_song_ids = {}
 for song_id, data in features_reduced.items():
     cluster_to_song_ids.setdefault(data["cluster"], []).append(song_id)
 
 # ---------------------------
-# Load PCA and YAMNet
+# Load PCA and YAMNet ONNX Model
 # ---------------------------
 pca = joblib.load(PCA_FILE)
-yamnet = hub.load("https://tfhub.dev/google/yamnet/1")
+
+# --- Updated Model Loading ---
+print(f"[i] Loading ONNX YAMNet model from '{ONNX_MODEL_PATH}'...")
+onnx_session = ort.InferenceSession(ONNX_MODEL_PATH)
+# Get model input and output names dynamically for robustness
+input_name = onnx_session.get_inputs()[0].name
+output_names = [output.name for output in onnx_session.get_outputs()]
+print("[✓] ONNX model loaded successfully.")
+# ---
 
 # Load YAMNet class names for instrument detection
 print("[i] Loading YAMNet class names...")
@@ -54,11 +61,12 @@ yamnet_class_map_url = "https://raw.githubusercontent.com/tensorflow/models/mast
 try:
     resp = requests.get(yamnet_class_map_url, timeout=30)
     resp.raise_for_status()
-    CLASS_NAMES = [line.split(",")[2].strip() for line in resp.text.strip().split("\n")[1:]]
+    # Ensure quotes are stripped from class names
+    CLASS_NAMES = [line.split(",")[2].strip().strip('"') for line in resp.text.strip().split("\n")[1:]]
     print(f"[✓] Loaded {len(CLASS_NAMES)} YAMNet class names")
 except Exception as e:
     print(f"[!] Failed to load class names: {e}")
-    CLASS_NAMES = [f"class_{i}" for i in range(521)]  # Fallback
+    CLASS_NAMES = [f"class_{i}" for i in range(521)]
 
 # ---------------------------
 # Helpers
@@ -85,8 +93,9 @@ def extract_librosa(y, sr):
     ] + spectral_contrast
     return np.array(feature_vector, dtype=np.float32), duration
 
+# --- Rewritten YAMNet extraction function ---
 def extract_yamnet_with_instruments(y, sr, chunk_sec=2):
-    """Extract YAMNet embeddings and instrument scores (matching training pipeline)"""
+    """Extract YAMNet embeddings and instrument scores using the ONNX model."""
     chunk_len = sr * chunk_sec
     embeddings_list, scores_list = [], []
     
@@ -94,30 +103,34 @@ def extract_yamnet_with_instruments(y, sr, chunk_sec=2):
         chunk = y[start:start+chunk_len]
         if len(chunk) == 0:
             continue
-        # Flatten chunk to 1D (matching training pipeline)
-        chunk_flat = np.reshape(chunk, (-1,))
-        chunk_tensor = tf.convert_to_tensor(chunk_flat, dtype=tf.float32)
-        scores, embeddings, _ = yamnet(chunk_tensor)
-        scores_list.append(scores.numpy())
-        embeddings_list.append(embeddings.numpy())
+        
+        chunk_flat_np = np.reshape(chunk, (-1,)).astype(np.float32)
+
+        # Run ONNX inference
+        onnx_outputs = onnx_session.run(output_names, {input_name: chunk_flat_np})
+        
+        # Map outputs by name to avoid order dependency
+        output_map = {name: out for name, out in zip(output_names, onnx_outputs)}
+        scores = output_map['scores']
+        embeddings = output_map['embeddings']
+
+        scores_list.append(scores)
+        embeddings_list.append(embeddings)
     
     if embeddings_list and scores_list:
         scores_mean = np.mean(np.vstack(scores_list), axis=0)
         embeddings_mean = np.mean(np.vstack(embeddings_list), axis=0)
         
-        # Extract top instrument scores (matching training pipeline)
         top_idx = np.argsort(scores_mean)[::-1][:20]
         instruments = {CLASS_NAMES[i]: float(scores_mean[i]) for i in top_idx if scores_mean[i] > 0.15}
-        
-        # Get the top instrument score (matching feature_selector.py)
         top_instrument_score = list(instruments.values())[0] if instruments else 0.0
         
         return embeddings_mean, top_instrument_score
     
     return np.zeros(1024, dtype=np.float32), 0.0
+# ---
 
 def combine_features(librosa_feat, yamnet_feat_reduced, instrument_feat, duration_feat):
-    """Combine features in the same order as training pipeline"""
     return np.hstack([librosa_feat, yamnet_feat_reduced, [instrument_feat], [duration_feat]]).astype(np.float32)
 
 def assign_cluster(feature_vec):
@@ -136,28 +149,17 @@ def assign_cluster(feature_vec):
 def run(file_path: str):
     """Process a single MP3 file and return recommendations."""
     try:
-        # Load audio
         y, sr = load_mp3(file_path)
-        
-        # Extract Librosa features
         lib_feat, dur = extract_librosa(y, sr)
         
-        # Extract YAMNet features and instruments
+        # This function call stays the same, but now uses the ONNX implementation
         yam_feat, instrument_score = extract_yamnet_with_instruments(y, sr)
         
-        # Apply PCA
         yam_feat_reduced = pca.transform(yam_feat.reshape(1, -1))[0]
-        
-        # Combine features
         final_vec = combine_features(lib_feat, yam_feat_reduced, instrument_score, dur)
-        
-        # Assign to cluster
         cluster_id = assign_cluster(final_vec)
-        
-        # Get candidate songs
         candidate_song_ids = cluster_to_song_ids.get(cluster_id, [])
         
-        # Fallback to similarity if cluster empty
         if not candidate_song_ids:
             similarities = []
             for sid, song_data in features_reduced.items():
@@ -168,26 +170,19 @@ def run(file_path: str):
             similarities.sort(key=lambda x: x[1], reverse=True)
             candidate_song_ids = [sid for sid, _ in similarities[:10]]
         
-        # Build recommendations with duplicate filtering
         top_songs = []
         seen_urls = set()
         
         for sid in candidate_song_ids:
-            if len(top_songs) >= 10:  # Stop when we have 10 unique songs
+            if len(top_songs) >= 10:
                 break
-                
             if sid in song_id_to_meta:
                 song_meta = song_id_to_meta[sid]
                 perma_url = song_meta.get("perma_url")
-                
-                # Skip if we've already seen this URL
                 if perma_url and perma_url in seen_urls:
                     continue
-                    
-                # Add to seen URLs if it exists
                 if perma_url:
                     seen_urls.add(perma_url)
-                
                 top_songs.append({
                     "song_id": sid,
                     "title": song_meta["title"],
@@ -205,7 +200,6 @@ def run(file_path: str):
             "recommendations": top_songs,
             "method": "cluster" if cluster_to_song_ids.get(cluster_id) else "similarity"
         }
-
     except Exception as e:
         return {"error": str(e)}
 
@@ -214,11 +208,15 @@ def run(file_path: str):
 # ---------------------------
 if __name__ == "__main__":
     predictions = {}
-    print(f"[i] Processing {len(list(Path(TEST_DIR).glob('*.mp3')))} test files...")
-    for fp in Path(TEST_DIR).glob("*.mp3"):
-        print(f"[i] Processing: {fp.name}")
-        predictions[fp.name] = run(str(fp))
-    with open(OUTPUT_JSON, "w") as f:
-        json.dump(predictions, f, indent=2)
-    print(f"[✓] Predictions saved to '{OUTPUT_JSON}'")
-    print(f"[✓] Processed {len(predictions)} files successfully")
+    test_files = list(Path(TEST_DIR).glob("*.mp3"))
+    if not test_files:
+        print(f"[!] No .mp3 files found in the '{TEST_DIR}' directory. Exiting.")
+    else:
+        print(f"[i] Processing {len(test_files)} test files...")
+        for fp in test_files:
+            print(f"[i] Processing: {fp.name}")
+            predictions[fp.name] = run(str(fp))
+        with open(OUTPUT_JSON, "w") as f:
+            json.dump(predictions, f, indent=2)
+        print(f"[✓] Predictions saved to '{OUTPUT_JSON}'")
+        print(f"[✓] Processed {len(predictions)} files successfully")

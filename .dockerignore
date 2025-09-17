@@ -1,0 +1,68 @@
+# Git
+.git/
+.gitignore
+README.md
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+.pytest_cache/
+*.egg-info/
+
+# Development and data directories (these can be large!)
+database/
+datasets/
+notebooks/
+patches/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Logs and temporary files
+*.log
+*.sqlite
+*.db
+temp/
+tmp/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+
+# Large media files (unless your app needs them in container)
+*.mp4
+*.avi
+*.mov
+*.wav
+*.mp3
+*.flac
+uploads/
+
+# Model files (if they're large)
+*.pkl
+*.model
+*.h5
+*.pt
+*.pth
+
+# Documentation and examples
+docs/
+examples/
+tests/

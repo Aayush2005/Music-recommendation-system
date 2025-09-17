@@ -211,4 +211,8 @@ __marimo__/
 /datasets
 metadata_backups/
 database/
-teat/
+test/
+predictions_cluster_top10.json
+notebooks/
+dataset_preparation/
+patches/

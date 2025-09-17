@@ -1,22 +1,21 @@
 FROM python:3.12-slim
 
-# Install system dependencies including FFmpeg
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Upgrade pip and pull CPU-only TF from Google index
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt \
+    --extra-index-url https://storage.googleapis.com/tensorflow/linux/cpu
+
 COPY . .
 
-# Expose port
-EXPOSE 5000
+ENV PORT=8080
+EXPOSE $PORT
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+CMD ["sh", "-c", "exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app"]
