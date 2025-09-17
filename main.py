@@ -10,7 +10,7 @@ Flask Web App for Music Recommendation System
 import os
 import json
 import tempfile
-import subprocess
+import shutil # <-- Import shutil for file copying
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
@@ -39,10 +39,8 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path("temp_downloads")
 TEMP_DIR.mkdir(exist_ok=True)
 
-# --- MODIFICATION START ---
-# Define the path for the cookie file, which Render provides at this location
-COOKIE_FILE_PATH = '/etc/secrets/cookies.txt'
-# --- MODIFICATION END ---
+# Define the path for the read-only secret cookie file
+SECRET_COOKIE_PATH = '/etc/secrets/cookies.txt'
 
 
 def download_youtube_audio(url, output_path):
@@ -61,12 +59,17 @@ def download_youtube_audio(url, output_path):
         }
         
         # --- MODIFICATION START ---
-        # Check if the cookie file exists and add it to the options
-        if os.path.exists(COOKIE_FILE_PATH):
-            logger.info(f"Cookie file found at {COOKIE_FILE_PATH}. Using cookies for download.")
-            ydl_opts['cookiefile'] = COOKIE_FILE_PATH
+        # Copy the read-only secret cookie file to a temporary, writable location
+        if os.path.exists(SECRET_COOKIE_PATH):
+            temp_cookie_path = output_path / 'cookies.txt'
+            try:
+                shutil.copyfile(SECRET_COOKIE_PATH, temp_cookie_path)
+                logger.info(f"Copied secret cookie file to writable location: {temp_cookie_path}")
+                ydl_opts['cookiefile'] = str(temp_cookie_path)
+            except Exception as e:
+                logger.error(f"Failed to copy cookie file: {e}")
         else:
-            logger.info("Cookie file not found. Proceeding without cookies.")
+            logger.info("Secret cookie file not found. Proceeding without cookies.")
         # --- MODIFICATION END ---
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -82,6 +85,8 @@ def download_youtube_audio(url, output_path):
     except Exception as e:
         logger.error(f"Error downloading from YouTube: {e}")
         return None, None
+
+# ... (The rest of your code remains exactly the same) ...
 
 def cleanup_temp_files(file_path):
     """Clean up temporary files"""
